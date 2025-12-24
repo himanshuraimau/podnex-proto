@@ -3,10 +3,27 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "start": "bun run src/index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.478.0",
+    "@aws-sdk/lib-storage": "^3.478.0",
+    "@types/express": "^5.0.6",
+    "@types/fluent-ffmpeg": "^2.1.24",
+    "dotenv": "^17.2.3",
+    "elevenlabs": "^1.59.0",
+    "express": "^5.2.1",
+    "ffmpeg-static": "^5.2.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "openai": "^6.15.0",
+    "zod": "^4.2.1"
   }
 }
