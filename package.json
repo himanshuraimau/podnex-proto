@@ -4,11 +4,17 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run src/index.ts",
-    "start": "bun run src/index.ts"
+    "dev": "bun run index.ts",
+    "start": "bun run index.ts",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop podcast-service",
+    "pm2:restart": "pm2 restart podcast-service",
+    "pm2:logs": "pm2 logs podcast-service",
+    "pm2:monit": "pm2 monit"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "pm2": "^6.0.14"
   },
   "peerDependencies": {
     "typescript": "^5"

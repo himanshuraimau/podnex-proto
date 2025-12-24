@@ -48,11 +48,49 @@ S3_BUCKET_NAME=your-bucket-name
 
 ### 3. Start Server
 
+**Development:**
+
 ```bash
-bun run src/index.ts
+bun run dev
+```
+
+**Production with PM2:**
+
+```bash
+# Start the service
+bun run pm2:start
+
+# View logs
+bun run pm2:logs
+
+# Monitor
+bun run pm2:monit
+
+# Restart
+bun run pm2:restart
+
+# Stop
+bun run pm2:stop
 ```
 
 The server will start on `http://localhost:3000`
+
+## PM2 Process Management
+
+PM2 is configured for production deployments with:
+- Auto-restart on crashes
+- Log management (`logs/` directory)
+- Memory limit (1GB)
+- Bun runtime integration
+
+**PM2 Commands:**
+- `bun run pm2:start` - Start the service
+- `bun run pm2:stop` - Stop the service
+- `bun run pm2:restart` - Restart the service
+- `bun run pm2:logs` - View logs
+- `bun run pm2:monit` - Monitor CPU/memory
+
+Configuration in `ecosystem.config.js`
 
 ## API Usage
 
