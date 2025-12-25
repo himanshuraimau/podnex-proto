@@ -1,9 +1,7 @@
-import OpenAI from 'openai';
+import { generateText, Output } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { z } from 'zod';
 import type { DialogueSegment, PodcastDuration, DurationConfig } from '../types/index.js';
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
 
 // Duration configurations
 const DURATION_CONFIGS: Record<PodcastDuration, DurationConfig> = {
@@ -16,6 +14,12 @@ const DURATION_CONFIGS: Record<PodcastDuration, DurationConfig> = {
         description: '8-10 minute podcast with detailed discussion and examples',
     },
 };
+
+// Zod schema for dialogue segment
+const dialogueSegmentSchema = z.object({
+    speaker: z.enum(['host', 'guest']).describe('The speaker: either host or guest'),
+    text: z.string().describe('What the speaker says in this segment'),
+});
 
 export async function generateScript(
     noteContent: string,
@@ -34,62 +38,32 @@ Guidelines:
 - Break down complex topics into digestible segments
 - ${duration === 'short' ? 'Focus ONLY on the most important key points' : 'Provide detailed explanations with examples and context'}
 
-Return ONLY a JSON array of dialogue segments in this exact format:
-[
-  {"speaker": "host", "text": "Welcome! Today we're discussing..."},
-  {"speaker": "guest", "text": "Thanks for having me..."},
-  ...
-]`;
+Generate an array of dialogue segments alternating between host and guest.`;
 
     const userPrompt = `Convert these notes into a ${config.description}:
 
 ${noteContent}
 
-Remember: Target ${config.targetWords} words total. Return ONLY the JSON array, no other text.`;
+Remember: Target ${config.targetWords} words total across all dialogue segments.`;
 
     try {
-        const response = await openai.chat.completions.create({
-            model: 'gpt-4-turbo-preview',
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt },
-            ],
-            response_format: { type: 'json_object' },
+        console.log(`Generating ${duration} podcast script...`);
+
+        const { output } = await generateText({
+            model: openai('gpt-4.1'),
+            system: systemPrompt,
+            prompt: userPrompt,
+            output: Output.array({
+                element: dialogueSegmentSchema,
+            }),
             temperature: 0.7,
         });
 
-        const content = response.choices[0]?.message?.content;
-        if (!content) {
-            throw new Error('No content received from OpenAI');
-        }
-
-        // Parse the response - it might be wrapped in an object
-        let parsed = JSON.parse(content);
-
-        // If it's wrapped in an object, extract the array
-        if (!Array.isArray(parsed)) {
-            // Try to find an array property
-            const arrayKey = Object.keys(parsed).find(key => Array.isArray(parsed[key]));
-            if (arrayKey) {
-                parsed = parsed[arrayKey];
-            } else {
-                throw new Error('Response is not an array and contains no array property');
-            }
-        }
-
-        // Validate the structure
-        const dialogue: DialogueSegment[] = parsed.map((segment: any) => {
-            if (!segment.speaker || !segment.text) {
-                throw new Error('Invalid dialogue segment structure');
-            }
-            if (segment.speaker !== 'host' && segment.speaker !== 'guest') {
-                throw new Error(`Invalid speaker: ${segment.speaker}`);
-            }
-            return {
-                speaker: segment.speaker as 'host' | 'guest',
-                text: segment.text,
-            };
-        });
+        // The output is already validated and typed correctly
+        const dialogue: DialogueSegment[] = output.map(segment => ({
+            speaker: segment.speaker as 'host' | 'guest',
+            text: segment.text,
+        }));
 
         console.log(`Generated ${dialogue.length} dialogue segments (${duration} podcast)`);
         return dialogue;

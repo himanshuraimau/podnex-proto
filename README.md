@@ -31,7 +31,7 @@ bun install
 Create a `.env` file based on `.env.example`:
 
 ```env
-PORT=3000
+PORT=3005
 
 # OpenAI (for script generation)
 OPENAI_API_KEY=sk-...
@@ -43,7 +43,16 @@ ELEVENLABS_API_KEY=...
 AWS_ACCESS_KEY_ID=...
 AWS_SECRET_ACCESS_KEY=...
 AWS_REGION=us-east-1
-S3_BUCKET_NAME=your-bucket-name
+S3_BUCKET_NAME=your-bucket-name-here
+
+# API Keys (comma-separated for multiple keys)
+API_KEYS=your-secret-key-1,your-secret-key-2
+```
+
+**Generate your own API keys:**
+```bash
+# Generate a random API key
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 ### 3. Start Server
@@ -73,7 +82,7 @@ bun run pm2:restart
 bun run pm2:stop
 ```
 
-The server will start on `http://localhost:3000`
+The server will start on `http://localhost:3005`
 
 ## PM2 Process Management
 
@@ -156,8 +165,9 @@ Configuration in `ecosystem.config.js`
 ### Test Short Podcast (3-5 min)
 
 ```bash
-curl -X POST http://localhost:3000/api/podcast/generate \
+curl -X POST http://localhost:3005/api/podcast/generate \
   -H "Content-Type: application/json" \
+  -H "x-api-key: your-secret-key-1" \
   -d '{
     "noteId": "test-short",
     "noteContent": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. It focuses on developing computer programs that can access data and use it to learn for themselves.",
@@ -169,8 +179,9 @@ curl -X POST http://localhost:3000/api/podcast/generate \
 ### Test Long Podcast (8-10 min)
 
 ```bash
-curl -X POST http://localhost:3000/api/podcast/generate \
+curl -X POST http://localhost:3005/api/podcast/generate \
   -H "Content-Type: application/json" \
+  -H "x-api-key: your-secret-key-1" \
   -d '{
     "noteId": "test-long",
     "noteContent": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. It focuses on developing computer programs that can access data and use it to learn for themselves. The process involves feeding data to algorithms and allowing them to learn patterns and make decisions.",

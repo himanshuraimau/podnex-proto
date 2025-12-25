@@ -7,7 +7,7 @@ echo "================================"
 echo ""
 
 # Check if server is running
-if ! curl -s http://localhost:3000/api/podcast/health > /dev/null; then
+if ! curl -s http://localhost:3005/api/podcast/health > /dev/null; then
     echo "❌ Server is not running!"
     echo "Please start the server first: bun run dev"
     exit 1
@@ -20,7 +20,7 @@ echo ""
 echo "Test 1: Generating SHORT podcast (3-5 min)..."
 echo "--------------------------------------------"
 
-SHORT_RESPONSE=$(curl -s -X POST http://localhost:3000/api/podcast/generate \
+SHORT_RESPONSE=$(curl -s -X POST http://localhost:3005/api/podcast/generate \
   -H "Content-Type: application/json" \
   -d '{
     "noteId": "test-short-'$(date +%s)'",
@@ -44,7 +44,7 @@ echo ""
 echo "Test 2: Generating LONG podcast (8-10 min)..."
 echo "--------------------------------------------"
 
-LONG_RESPONSE=$(curl -s -X POST http://localhost:3000/api/podcast/generate \
+LONG_RESPONSE=$(curl -s -X POST http://localhost:3005/api/podcast/generate \
   -H "Content-Type: application/json" \
   -d '{
     "noteId": "test-long-'$(date +%s)'",

@@ -6,6 +6,7 @@ import { generateAudio } from '../services/audioGenerator.js';
 import { combineAudio } from '../services/audioCombiner.js';
 import { uploadToS3 } from '../services/s3Uploader.js';
 import { podcastDb } from '../services/podcastDatabase.js';
+import { apiKeyAuth } from '../middleware/apiKeyAuth.js';
 
 const router = express.Router();
 
@@ -19,8 +20,8 @@ const generatePodcastSchema = z.object({
     }),
 });
 
-// POST /api/podcast/generate
-router.post('/generate', async (req: Request, res: Response) => {
+// POST /api/podcast/generate - Protected with API key
+router.post('/generate', apiKeyAuth, async (req: Request, res: Response) => {
     const startTime = Date.now();
     let podcastId: string | undefined;
 
@@ -124,34 +125,13 @@ router.post('/generate', async (req: Request, res: Response) => {
     }
 });
 
-// GET /api/podcast/:id - Get podcast by ID
-router.get('/:id', async (req: Request, res: Response) => {
-    try {
-        const id = req.params.id;
-        if (!id) {
-            return res.status(400).json({ success: false, error: 'Podcast ID is required' });
-        }
-        const podcast = await podcastDb.getPodcastById(id);
-
-        if (!podcast) {
-            return res.status(404).json({
-                success: false,
-                error: 'Podcast not found',
-            });
-        }
-
-        return res.json({
-            success: true,
-            podcast,
-        });
-    } catch (error) {
-        console.error('Error getting podcast:', error);
-        return res.status(500).json({
-            success: false,
-            error: 'Failed to get podcast',
-            message: error instanceof Error ? error.message : 'Unknown error',
-        });
-    }
+// Health check endpoint - MUST come before /:id route
+router.get('/health', (req: Request, res: Response) => {
+    res.json({
+        status: 'ok',
+        service: 'podcast-generator',
+        timestamp: new Date().toISOString(),
+    });
 });
 
 // GET /api/podcast/user/:userId - Get all podcasts for a user
@@ -206,6 +186,36 @@ router.get('/note/:noteId', async (req: Request, res: Response) => {
     }
 });
 
+// GET /api/podcast/:id - Get podcast by ID (MUST come after specific routes)
+router.get('/:id', async (req: Request, res: Response) => {
+    try {
+        const id = req.params.id;
+        if (!id) {
+            return res.status(400).json({ success: false, error: 'Podcast ID is required' });
+        }
+        const podcast = await podcastDb.getPodcastById(id);
+
+        if (!podcast) {
+            return res.status(404).json({
+                success: false,
+                error: 'Podcast not found',
+            });
+        }
+
+        return res.json({
+            success: true,
+            podcast,
+        });
+    } catch (error) {
+        console.error('Error getting podcast:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Failed to get podcast',
+            message: error instanceof Error ? error.message : 'Unknown error',
+        });
+    }
+});
+
 // DELETE /api/podcast/:id - Delete a podcast
 router.delete('/:id', async (req: Request, res: Response) => {
     try {
@@ -234,15 +244,6 @@ router.delete('/:id', async (req: Request, res: Response) => {
             message: error instanceof Error ? error.message : 'Unknown error',
         });
     }
-});
-
-// Health check endpoint
-router.get('/health', (req: Request, res: Response) => {
-    res.json({
-        status: 'ok',
-        service: 'podcast-generator',
-        timestamp: new Date().toISOString(),
-    });
 });
 
 export default router;

@@ -9,7 +9,7 @@ dotenv.config();
 // Validate required environment variables
 const requiredEnvVars = [
     'OPENAI_API_KEY',
-    'ELEVENLABS_API_KEY',
+    'UNREAL_SPEECH_API_KEY',
     'AWS_ACCESS_KEY_ID',
     'AWS_SECRET_ACCESS_KEY',
     'S3_BUCKET_NAME',
@@ -25,7 +25,7 @@ if (missingEnvVars.length > 0) {
 }
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3005;
 
 // Middleware
 app.use(express.json({ limit: '10mb' })); // Support large note content
@@ -90,7 +90,7 @@ app.listen(PORT, async () => {
     }
 
     console.log(`✓ OpenAI: Configured`);
-    console.log(`✓ ElevenLabs: Configured`);
+    console.log(`✓ Unreal Speech: Configured`);
     console.log(`✓ AWS S3: ${process.env.S3_BUCKET_NAME}`);
     console.log('\nEndpoints:');
     console.log(`  POST http://localhost:${PORT}/api/podcast/generate`);
