@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import podcastRoutes from './src/routes/podcast.js';
+import { connectDatabase } from './src/config/database.js';
 
 // Load environment variables
 dotenv.config();
@@ -12,6 +13,7 @@ const requiredEnvVars = [
     'AWS_ACCESS_KEY_ID',
     'AWS_SECRET_ACCESS_KEY',
     'S3_BUCKET_NAME',
+    'MONGODB_URI',
 ];
 
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
@@ -74,16 +76,28 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log('\n🎙️  Podcast Microservice');
     console.log('========================');
     console.log(`✓ Server running on port ${PORT}`);
     console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
+
+    // Connect to MongoDB
+    try {
+        await connectDatabase();
+    } catch (error) {
+        console.error('Failed to connect to MongoDB. Server will continue but database features will not work.');
+    }
+
     console.log(`✓ OpenAI: Configured`);
     console.log(`✓ ElevenLabs: Configured`);
     console.log(`✓ AWS S3: ${process.env.S3_BUCKET_NAME}`);
     console.log('\nEndpoints:');
     console.log(`  POST http://localhost:${PORT}/api/podcast/generate`);
+    console.log(`  GET  http://localhost:${PORT}/api/podcast/:id`);
+    console.log(`  GET  http://localhost:${PORT}/api/podcast/user/:userId`);
+    console.log(`  GET  http://localhost:${PORT}/api/podcast/note/:noteId`);
+    console.log(`  DELETE http://localhost:${PORT}/api/podcast/:id`);
     console.log(`  GET  http://localhost:${PORT}/api/podcast/health`);
     console.log('\nReady to generate podcasts! 🚀\n');
 });
