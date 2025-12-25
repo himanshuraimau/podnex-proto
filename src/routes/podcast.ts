@@ -63,7 +63,7 @@ router.post('/generate', apiKeyAuth, async (req: Request, res: Response) => {
 
         // Step 3: Combine audio segments
         console.log('\n[3/4] Combining audio...');
-        const finalAudio = await combineAudio(audioSegments);
+        const { audioBuffer: finalAudio, totalDuration } = await combineAudio(audioSegments);
 
         // Step 4: Upload to S3
         console.log('\n[4/4] Uploading to S3...');
@@ -76,9 +76,6 @@ router.post('/generate', apiKeyAuth, async (req: Request, res: Response) => {
             startTime: segment.startTime,
             endTime: segment.endTime,
         }));
-
-        // Calculate total duration
-        const totalDuration = audioSegments[audioSegments.length - 1]?.endTime || 0;
 
 
         // Update podcast record with results
