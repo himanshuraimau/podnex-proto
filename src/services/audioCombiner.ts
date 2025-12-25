@@ -10,7 +10,7 @@ if (ffmpegStatic) {
     ffmpeg.setFfmpegPath(ffmpegStatic);
 }
 
-export async function combineAudio(audioSegments: AudioSegment[]): Promise<Buffer> {
+export async function combineAudio(audioSegments: AudioSegment[]): Promise<{ audioBuffer: Buffer; totalDuration: number }> {
     // Create temporary directory
     const tempDir = mkdtempSync(join(tmpdir(), 'podcast-'));
     const tempFiles: string[] = [];
@@ -18,6 +18,9 @@ export async function combineAudio(audioSegments: AudioSegment[]): Promise<Buffe
 
     try {
         console.log('Combining audio segments...');
+
+        // Calculate total duration from all segments
+        const totalDuration = audioSegments.reduce((sum, segment) => sum + segment.duration, 0);
 
         // Write all audio buffers to temporary files
         for (let i = 0; i < audioSegments.length; i++) {
@@ -64,8 +67,9 @@ export async function combineAudio(audioSegments: AudioSegment[]): Promise<Buffe
         const finalBuffer = await fs.readFile(outputFile);
 
         console.log(`Final audio size: ${(finalBuffer.length / 1024 / 1024).toFixed(2)} MB`);
+        console.log(`Total duration: ${totalDuration.toFixed(2)} seconds`);
 
-        return finalBuffer;
+        return { audioBuffer: finalBuffer, totalDuration };
     } catch (error) {
         console.error('Error combining audio:', error);
         throw new Error(`Failed to combine audio: ${error instanceof Error ? error.message : 'Unknown error'}`);

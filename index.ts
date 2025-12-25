@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import podcastRoutes from './src/routes/podcast.js';
 import { connectDatabase } from './src/config/database.js';
+import { startJobProcessor } from './src/services/jobProcessor.js';
 
 // Load environment variables
 dotenv.config();

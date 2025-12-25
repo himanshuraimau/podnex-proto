@@ -7,6 +7,7 @@ import { combineAudio } from '../services/audioCombiner.js';
 import { uploadToS3 } from '../services/s3Uploader.js';
 import { podcastDb } from '../services/podcastDatabase.js';
 import { apiKeyAuth } from '../middleware/apiKeyAuth.js';
+import { jobQueue } from '../services/jobQueue.js';
 
 const router = express.Router();
 

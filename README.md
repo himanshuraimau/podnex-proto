@@ -1,193 +1,151 @@
-# Podcast Microservice 🎙️
+# Podcast Microservice
 
-A microservice that converts text notes into engaging two-person podcast audio with dual duration options.
+Convert text notes into engaging two-person podcast audio with AI-generated dialogue and professional voice synthesis.
 
 ## Features
 
-- **Dual Duration Support**: Generate short (3-5 min) or long (8-10 min) podcasts
-- **Natural Dialogue**: AI-powered script generation with host/guest conversation
-- **Professional Audio**: High-quality TTS using ElevenLabs with distinct voices
-- **Automatic Timestamps**: Precise timing for each speaker segment
-- **Cloud Storage**: Automatic upload to AWS S3 with public URLs
+- 🎙️ **Dual Voice Podcast**: Host & guest conversation format
+- ⏱️ **Two Duration Options**: Short (3-5 min) or Long (8-10 min)
+- 🎯 **AI Script Generation**: GPT-4 creates natural dialogue from your notes
+- 🔊 **Professional TTS**: Choice of Unreal Speech (cost-effective) or ElevenLabs (premium)
+- 📝 **Full Transcripts**: Word-level timestamps for each speaker
+- ☁️ **S3 Storage**: Automatic upload with public URLs
+- 💾 **MongoDB Persistence**: Full history and retrieval
+- 🔐 **API Key Auth**: Secure access control
 
-## Tech Stack
+## Quick Start
 
-- **Runtime**: Bun
-- **Framework**: Express.js + TypeScript
-- **AI/TTS**: OpenAI GPT-4 + ElevenLabs
-- **Audio Processing**: FFmpeg
-- **Storage**: AWS S3
+### Prerequisites
 
-## Setup
+- [Bun](https://bun.sh) runtime
+- MongoDB (local or Atlas)
+- AWS S3 bucket
+- API keys for OpenAI and TTS provider
 
-### 1. Install Dependencies
+### Installation
 
 ```bash
+# Clone repository
+git clone <your-repo>
+cd podnex-proto
+
+# Install dependencies
 bun install
+
+# Create environment file
+cp .env.example .env
 ```
 
-### 2. Configure Environment
+### Configuration
 
-Create a `.env` file based on `.env.example`:
+Edit `.env` with your credentials:
 
 ```env
 PORT=3005
 
-# OpenAI (for script generation)
-OPENAI_API_KEY=sk-...
+# TTS Provider: 'unreal' (cheap) or 'elevenlabs' (premium)
+TTS_PROVIDER=unreal
 
-# ElevenLabs (for text-to-speech)
-ELEVENLABS_API_KEY=...
+# API Keys
+UNREAL_SPEECH_API_KEY=your_key
+ELEVENLABS_API_KEY=your_key  # only if using elevenlabs
+OPENAI_API_KEY=your_key
 
-# AWS S3 (for audio storage)
-AWS_ACCESS_KEY_ID=...
-AWS_SECRET_ACCESS_KEY=...
+# AWS S3
+AWS_ACCESS_KEY_ID=your_key
+AWS_SECRET_ACCESS_KEY=your_key
 AWS_REGION=us-east-1
-S3_BUCKET_NAME=your-bucket-name-here
+S3_BUCKET_NAME=your-bucket
 
-# API Keys (comma-separated for multiple keys)
+# MongoDB
+MONGODB_URI=mongodb://localhost:27017/podcast-service
+
+# Authentication (comma-separated keys)
 API_KEYS=your-secret-key-1,your-secret-key-2
 ```
 
-**Generate your own API keys:**
-```bash
-# Generate a random API key
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-### 3. Start Server
-
-**Development:**
+### Start Server
 
 ```bash
+# Development
 bun run dev
+
+# Production
+bun run start
 ```
 
-**Production with PM2:**
+Server runs on `http://localhost:3005`
 
-```bash
-# Start the service
-bun run pm2:start
-
-# View logs
-bun run pm2:logs
-
-# Monitor
-bun run pm2:monit
-
-# Restart
-bun run pm2:restart
-
-# Stop
-bun run pm2:stop
-```
-
-The server will start on `http://localhost:3005`
-
-## PM2 Process Management
-
-PM2 is configured for production deployments with:
-- Auto-restart on crashes
-- Log management (`logs/` directory)
-- Memory limit (1GB)
-- Bun runtime integration
-
-**PM2 Commands:**
-- `bun run pm2:start` - Start the service
-- `bun run pm2:stop` - Stop the service
-- `bun run pm2:restart` - Restart the service
-- `bun run pm2:logs` - View logs
-- `bun run pm2:monit` - Monitor CPU/memory
-
-Configuration in `ecosystem.config.js`
-
-## API Usage
+## Usage
 
 ### Generate Podcast
-
-**Endpoint**: `POST /api/podcast/generate`
-
-**Request Body**:
-
-```json
-{
-  "noteId": "unique-note-id",
-  "noteContent": "Your note content here...",
-  "userId": "user-123",
-  "duration": "short"
-}
-```
-
-**Parameters**:
-- `noteId` (string): Unique identifier for the note
-- `noteContent` (string): The text content to convert to podcast (min 10 chars)
-- `userId` (string): User identifier
-- `duration` (string): Either `"short"` (3-5 min) or `"long"` (8-10 min)
-
-**Response** (after 30-90 seconds):
-
-```json
-{
-  "success": true,
-  "audioUrl": "https://your-bucket.s3.us-east-1.amazonaws.com/podcasts/podcast-123-1234567890.mp3",
-  "duration": 245,
-  "transcript": [
-    {
-      "speaker": "host",
-      "text": "Welcome to today's podcast...",
-      "startTime": 0,
-      "endTime": 5.2
-    },
-    {
-      "speaker": "guest",
-      "text": "Thanks for having me...",
-      "startTime": 5.2,
-      "endTime": 10.5
-    }
-  ]
-}
-```
-
-### Health Check
-
-**Endpoint**: `GET /api/podcast/health`
-
-```json
-{
-  "status": "ok",
-  "service": "podcast-generator",
-  "timestamp": "2025-12-25T00:45:00.000Z"
-}
-```
-
-## Testing
-
-### Test Short Podcast (3-5 min)
 
 ```bash
 curl -X POST http://localhost:3005/api/podcast/generate \
   -H "Content-Type: application/json" \
-  -H "x-api-key: your-secret-key-1" \
+  -H "x-api-key: your-secret-key" \
   -d '{
-    "noteId": "test-short",
-    "noteContent": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. It focuses on developing computer programs that can access data and use it to learn for themselves.",
-    "userId": "user-123",
+    "noteId": "note-123",
+    "noteContent": "Your text content here...",
+    "userId": "user-456",
     "duration": "short"
   }'
 ```
 
-### Test Long Podcast (8-10 min)
+**Response:**
+```json
+{
+  "success": true,
+  "podcastId": "694ce2a3650fb5c4536cef1c",
+  "audioUrl": "https://your-bucket.s3.amazonaws.com/podcasts/podcast-xxx.mp3",
+  "duration": 297,
+  "transcript": [...]
+}
+```
+
+### Retrieve Podcast
 
 ```bash
-curl -X POST http://localhost:3005/api/podcast/generate \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: your-secret-key-1" \
-  -d '{
-    "noteId": "test-long",
-    "noteContent": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. It focuses on developing computer programs that can access data and use it to learn for themselves. The process involves feeding data to algorithms and allowing them to learn patterns and make decisions.",
-    "userId": "user-123",
-    "duration": "long"
-  }'
+# By podcast ID
+curl http://localhost:3005/api/podcast/{podcastId}
+
+# By user ID
+curl http://localhost:3005/api/podcast/user/{userId}
+
+# By note ID
+curl http://localhost:3005/api/podcast/note/{noteId}
+```
+
+## API Documentation
+
+See [API.md](./API.md) for complete API reference, integration guide, and examples.
+
+## Testing
+
+```bash
+# Run complete test suite
+./test-complete.sh
+```
+
+Tests include:
+- Health check
+- Short podcast generation
+- MongoDB storage verification
+- S3 upload verification
+- Retrieval endpoints
+
+## TTS Provider Comparison
+
+| Provider | Cost per 1K chars | Quality | Best For |
+|----------|------------------|---------|----------|
+| **Unreal Speech** | $0.008-0.016 | Good | Production, high-volume |
+| **ElevenLabs** | ~$0.30 | Premium | Low-volume, premium quality |
+
+**Savings:** Unreal Speech is **37x cheaper** than ElevenLabs!
+
+Switch providers by changing `TTS_PROVIDER` in `.env`:
+```env
+TTS_PROVIDER=unreal  # or 'elevenlabs'
 ```
 
 ## Architecture
@@ -196,114 +154,161 @@ curl -X POST http://localhost:3005/api/podcast/generate \
 ┌─────────────┐
 │   Client    │
 └──────┬──────┘
-       │
+       │ POST /generate
        ▼
 ┌─────────────────────────────────────┐
-│         Express Server              │
-│  ┌─────────────────────────────┐   │
-│  │   POST /api/podcast/generate│   │
-│  └─────────────┬───────────────┘   │
-└────────────────┼───────────────────┘
-                 │
-        ┌────────┴────────┐
-        ▼                 ▼
-┌──────────────┐  ┌──────────────┐
-│Script Gen    │  │Audio Gen     │
-│(OpenAI GPT-4)│→ │(ElevenLabs)  │
-└──────────────┘  └──────┬───────┘
-                         │
-                         ▼
-                  ┌──────────────┐
-                  │Audio Combiner│
-                  │   (FFmpeg)   │
-                  └──────┬───────┘
-                         │
-                         ▼
-                  ┌──────────────┐
-                  │ S3 Uploader  │
-                  │  (AWS S3)    │
-                  └──────┬───────┘
-                         │
-                         ▼
-                  ┌──────────────┐
-                  │  Audio URL   │
-                  └──────────────┘
+│     Podcast Microservice            │
+│                                     │
+│  1. Script Generation (GPT-4)      │
+│  2. Audio Generation (TTS)         │
+│  3. Audio Combination (FFmpeg)     │
+│  4. S3 Upload                      │
+│  5. MongoDB Storage                │
+└─────────────────────────────────────┘
+       │
+       ▼
+┌─────────────┐     ┌─────────────┐
+│   MongoDB   │     │   AWS S3    │
+└─────────────┘     └─────────────┘
 ```
 
-## Duration Configurations
+## Integration with Your Backend
 
-| Duration | Target Length | Word Count | Use Case |
-|----------|--------------|------------|----------|
-| `short`  | 3-5 minutes  | ~600 words | Quick summaries, key points only |
-| `long`   | 8-10 minutes | ~1350 words | Detailed discussions with examples |
+### Environment Setup
 
-## Voice Configuration
-
-- **Host**: Rachel (ElevenLabs) - Warm, professional female voice
-- **Guest**: Adam (ElevenLabs) - Clear, engaging male voice
-
-You can customize voices by changing the voice IDs in `src/services/audioGenerator.ts`.
-
-## Error Handling
-
-The API includes comprehensive error handling for:
-- Invalid request parameters (400)
-- OpenAI API failures
-- ElevenLabs API failures
-- FFmpeg processing errors
-- S3 upload failures
-- General server errors (500)
-
-## Performance
-
-- **Short Podcast**: ~30-45 seconds generation time
-- **Long Podcast**: ~60-90 seconds generation time
-
-> **Note**: This is a synchronous API. The client must wait for the entire podcast to be generated before receiving a response.
-
-## Mobile Integration
-
-### Streaming (Recommended)
-
-```typescript
-import { Audio } from 'expo-av';
-
-// Generate podcast
-const response = await fetch('https://api.example.com/api/podcast/generate', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    noteId: note.id,
-    noteContent: note.content,
-    userId: user.id,
-    duration: 'short'
-  })
-});
-
-const { audioUrl, transcript } = await response.json();
-
-// Play audio
-const { sound } = await Audio.Sound.createAsync(
-  { uri: audioUrl },
-  { shouldPlay: true }
-);
+Add to your main backend's `.env`:
+```env
+PODCAST_API_URL=http://localhost:3005/api/podcast
+PODCAST_API_KEY=your-api-key
 ```
 
-### With Transcript Sync
+### Service Integration
 
-```typescript
-// Track playback position and highlight current speaker
-sound.setOnPlaybackStatusUpdate((status) => {
-  if (status.isLoaded) {
-    const currentTime = status.positionMillis / 1000;
-    const currentSegment = transcript.find(
-      seg => currentTime >= seg.startTime && currentTime < seg.endTime
+```javascript
+// podcast.service.js
+const axios = require('axios');
+
+const PODCAST_API_URL = process.env.PODCAST_API_URL;
+const PODCAST_API_KEY = process.env.PODCAST_API_KEY;
+
+async function generatePodcast(noteId, noteContent, userId, duration = 'short') {
+  const response = await axios.post(
+    `${PODCAST_API_URL}/generate`,
+    { noteId, noteContent, userId, duration },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': PODCAST_API_KEY,
+      },
+      timeout: 180000, // 3 minutes
+    }
+  );
+  
+  return response.data;
+}
+
+module.exports = { generatePodcast };
+```
+
+### Route Handler
+
+```javascript
+app.post('/api/notes/:noteId/podcast', async (req, res) => {
+  try {
+    const { noteId } = req.params;
+    const { content, duration } = req.body;
+    
+    const podcast = await generatePodcast(
+      noteId,
+      content,
+      req.user.id,
+      duration
     );
-    // Update UI to highlight current speaker
+    
+    res.json(podcast);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 ```
 
+## Deployment
+
+### Docker
+
+```bash
+# Build image
+docker build -t podcast-microservice .
+
+# Run container
+docker run -p 3005:3005 --env-file .env podcast-microservice
+```
+
+### PM2 (Production)
+
+```bash
+# Start
+bun run pm2:start
+
+# Monitor
+bun run pm2:monitor
+
+# Stop
+bun run pm2:stop
+```
+
+## Cost Estimation
+
+**For 10,000 podcasts/month:**
+
+| Service | Cost |
+|---------|------|
+| Unreal Speech TTS | $24-48 |
+| OpenAI GPT-4 | ~$50-100 |
+| AWS S3 Storage | ~$5-10 |
+| **Total** | **~$80-160/month** |
+
+*Using ElevenLabs would cost ~$1,000-1,600/month instead!*
+
+## Troubleshooting
+
+### Common Issues
+
+**Timeout on generation:**
+- Increase client timeout to 180 seconds minimum
+- Check server logs for errors
+
+**Invalid API key:**
+- Verify `x-api-key` header matches `.env` API_KEYS
+- Ensure no extra spaces in API key
+
+**Audio not accessible:**
+- Check S3 bucket permissions (public read required)
+- Verify CORS configuration on bucket
+
+**MongoDB connection failed:**
+- Ensure MongoDB is running
+- Check `MONGODB_URI` format
+
+## Tech Stack
+
+- **Runtime**: Bun
+- **Framework**: Express.js
+- **AI**: OpenAI GPT-4
+- **TTS**: Unreal Speech / ElevenLabs
+- **Audio**: FFmpeg
+- **Storage**: AWS S3
+- **Database**: MongoDB
+- **Language**: TypeScript
+
 ## License
 
 MIT
+
+## Support
+
+For issues and questions, see [API.md](./API.md) for detailed documentation.
+
+---
+
+**Built to solve Vercel timeout issues with podcast generation** 🎙️
