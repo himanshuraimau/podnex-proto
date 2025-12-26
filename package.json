@@ -9,7 +9,7 @@
     "test:webhook": "./test/test-webhook.sh",
     "test:complete": "./test/test-complete.sh",
     "test:webhook-direct": "bun run test/test-webhook-flow.ts",
-    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
     "pm2:stop": "pm2 stop podcast-service",
     "pm2:restart": "pm2 restart podcast-service",
     "pm2:logs": "pm2 logs podcast-service",
