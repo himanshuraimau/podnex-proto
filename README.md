@@ -132,21 +132,30 @@ curl http://localhost:3005/api/podcast/jobs/job_1766775319643_h6igj4g7e
 ### Test Complete Webhook Flow
 
 ```bash
-# Run comprehensive webhook test
+# Using npm scripts (recommended)
+bun run test:webhook
+
+# Or directly
 ./test/test-webhook.sh
 ```
 
 ### Test Complete Pipeline
 
 ```bash
-# Test sync generation and full pipeline
+# Using npm scripts (recommended)
+bun run test:complete
+
+# Or directly
 ./test/test-complete.sh
 ```
 
 ### Direct Test Script
 
 ```bash
-# Run webhook test directly
+# Using npm scripts (recommended)
+bun run test:webhook-direct
+
+# Or directly
 bun run test/test-webhook-flow.ts
 ```
 

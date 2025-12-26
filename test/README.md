@@ -8,6 +8,9 @@ This directory contains test scripts to verify the complete functionality of the
 Tests the complete async webhook-based podcast generation flow.
 
 ```bash
+# Using npm scripts (recommended)
+bun run test:webhook
+
 # From project root
 ./test/test-webhook.sh
 
@@ -26,6 +29,9 @@ cd test && ./test-webhook.sh
 Tests the entire synchronous pipeline from generation to storage.
 
 ```bash
+# Using npm scripts (recommended)
+bun run test:complete
+
 # From project root
 ./test/test-complete.sh
 
@@ -45,6 +51,9 @@ cd test && ./test-complete.sh
 Run the webhook test script directly with Bun.
 
 ```bash
+# Using npm scripts (recommended)
+bun run test:webhook-direct
+
 # From project root
 bun run test/test-webhook-flow.ts
 
