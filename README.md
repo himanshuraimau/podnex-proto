@@ -1,54 +1,58 @@
-# Podcast Microservice
+# 🎙️ PodNex - AI Podcast Generation Microservice
 
-Convert text notes into engaging two-person podcast audio with AI-generated dialogue and professional voice synthesis.
+A high-performance microservice that converts text content into engaging two-person podcast conversations using AI-powered script generation and text-to-speech synthesis.
 
-## Features
+## ✨ Features
 
-- 🎙️ **Dual Voice Podcast**: Host & guest conversation format
-- ⏱️ **Two Duration Options**: Short (3-5 min) or Long (8-10 min)
-- 🎯 **AI Script Generation**: GPT-4 creates natural dialogue from your notes
-- 🔊 **Professional TTS**: Choice of Unreal Speech (cost-effective) or ElevenLabs (premium)
-- 📝 **Full Transcripts**: Word-level timestamps for each speaker
-- ☁️ **S3 Storage**: Automatic upload with public URLs
-- 💾 **MongoDB Persistence**: Full history and retrieval
-- 🔐 **API Key Auth**: Secure access control
+- 🤖 **AI-Powered Script Generation** - OpenAI creates natural dialogue between host and guest
+- 🎵 **High-Quality Audio** - Unreal Speech TTS (37x cheaper than alternatives)
+- ⚡ **Async Job Queue** - No timeouts, perfect for Vercel/serverless environments
+- 📊 **Real-time Progress** - Track generation from 0% to 100%
+- 🔔 **Webhook Notifications** - Get notified when podcasts complete
+- 💾 **MongoDB Storage** - Persistent podcast metadata and transcripts
+- ☁️ **S3 Audio Storage** - Scalable, reliable audio hosting
+- 🔐 **API Key Authentication** - Secure your endpoints
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- [Bun](https://bun.sh) runtime
+- Bun runtime (or Node.js 18+)
 - MongoDB (local or Atlas)
 - AWS S3 bucket
-- API keys for OpenAI and TTS provider
+- OpenAI API key
+- Unreal Speech API key
 
 ### Installation
 
 ```bash
-# Clone repository
-git clone <your-repo>
+# Clone the repository
+git clone <your-repo-url>
 cd podnex-proto
 
 # Install dependencies
 bun install
 
-# Create environment file
+# Copy environment template
 cp .env.example .env
+
+# Edit .env with your credentials
+nano .env
 ```
 
 ### Configuration
 
-Edit `.env` with your credentials:
+Update `.env` with your credentials:
 
 ```env
+# Server
 PORT=3005
 
-# TTS Provider: 'unreal' (cheap) or 'elevenlabs' (premium)
+# TTS Provider
 TTS_PROVIDER=unreal
 
 # API Keys
 UNREAL_SPEECH_API_KEY=your_key
-ELEVENLABS_API_KEY=your_key  # only if using elevenlabs
 OPENAI_API_KEY=your_key
 
 # AWS S3
@@ -60,11 +64,15 @@ S3_BUCKET_NAME=your-bucket
 # MongoDB
 MONGODB_URI=mongodb://localhost:27017/podcast-service
 
-# Authentication (comma-separated keys)
+# Authentication
 API_KEYS=your-secret-key-1,your-secret-key-2
+
+# Webhooks (optional)
+WEBHOOK_URL=https://your-app.com/api/webhooks/podcast-complete
+WEBHOOK_SECRET=your-webhook-secret
 ```
 
-### Start Server
+### Run
 
 ```bash
 # Development
@@ -74,14 +82,15 @@ bun run dev
 bun run start
 ```
 
-Server runs on `http://localhost:3005`
+Server will start on `http://localhost:3005`
 
-## Usage
+## 📚 API Usage
 
-### Generate Podcast
+### Async Generation (Recommended)
 
 ```bash
-curl -X POST http://localhost:3005/api/podcast/generate \
+# Start podcast generation (returns instantly!)
+curl -X POST http://localhost:3005/api/podcast/generate/async \
   -H "Content-Type: application/json" \
   -H "x-api-key: your-secret-key" \
   -d '{
@@ -90,225 +99,191 @@ curl -X POST http://localhost:3005/api/podcast/generate \
     "userId": "user-456",
     "duration": "short"
   }'
-```
 
-**Response:**
-```json
+# Response (instant!)
 {
   "success": true,
-  "podcastId": "694ce2a3650fb5c4536cef1c",
-  "audioUrl": "https://your-bucket.s3.amazonaws.com/podcasts/podcast-xxx.mp3",
-  "duration": 297,
-  "transcript": [...]
-}
-```
-
-### Retrieve Podcast
-
-```bash
-# By podcast ID
-curl http://localhost:3005/api/podcast/{podcastId}
-
-# By user ID
-curl http://localhost:3005/api/podcast/user/{userId}
-
-# By note ID
-curl http://localhost:3005/api/podcast/note/{noteId}
-```
-
-## API Documentation
-
-See [API.md](./API.md) for complete API reference, integration guide, and examples.
-
-## Testing
-
-```bash
-# Run complete test suite
-./test-complete.sh
-```
-
-Tests include:
-- Health check
-- Short podcast generation
-- MongoDB storage verification
-- S3 upload verification
-- Retrieval endpoints
-
-## TTS Provider Comparison
-
-| Provider | Cost per 1K chars | Quality | Best For |
-|----------|------------------|---------|----------|
-| **Unreal Speech** | $0.008-0.016 | Good | Production, high-volume |
-| **ElevenLabs** | ~$0.30 | Premium | Low-volume, premium quality |
-
-**Savings:** Unreal Speech is **37x cheaper** than ElevenLabs!
-
-Switch providers by changing `TTS_PROVIDER` in `.env`:
-```env
-TTS_PROVIDER=unreal  # or 'elevenlabs'
-```
-
-## Architecture
-
-```
-┌─────────────┐
-│   Client    │
-└──────┬──────┘
-       │ POST /generate
-       ▼
-┌─────────────────────────────────────┐
-│     Podcast Microservice            │
-│                                     │
-│  1. Script Generation (GPT-4)      │
-│  2. Audio Generation (TTS)         │
-│  3. Audio Combination (FFmpeg)     │
-│  4. S3 Upload                      │
-│  5. MongoDB Storage                │
-└─────────────────────────────────────┘
-       │
-       ▼
-┌─────────────┐     ┌─────────────┐
-│   MongoDB   │     │   AWS S3    │
-└─────────────┘     └─────────────┘
-```
-
-## Integration with Your Backend
-
-### Environment Setup
-
-Add to your main backend's `.env`:
-```env
-PODCAST_API_URL=http://localhost:3005/api/podcast
-PODCAST_API_KEY=your-api-key
-```
-
-### Service Integration
-
-```javascript
-// podcast.service.js
-const axios = require('axios');
-
-const PODCAST_API_URL = process.env.PODCAST_API_URL;
-const PODCAST_API_KEY = process.env.PODCAST_API_KEY;
-
-async function generatePodcast(noteId, noteContent, userId, duration = 'short') {
-  const response = await axios.post(
-    `${PODCAST_API_URL}/generate`,
-    { noteId, noteContent, userId, duration },
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': PODCAST_API_KEY,
-      },
-      timeout: 180000, // 3 minutes
-    }
-  );
-  
-  return response.data;
+  "jobId": "job_1766775319643_h6igj4g7e",
+  "status": "queued",
+  "message": "Podcast generation started. Use the jobId to check status."
 }
 
-module.exports = { generatePodcast };
-```
+# Check status
+curl http://localhost:3005/api/podcast/jobs/job_1766775319643_h6igj4g7e
 
-### Route Handler
-
-```javascript
-app.post('/api/notes/:noteId/podcast', async (req, res) => {
-  try {
-    const { noteId } = req.params;
-    const { content, duration } = req.body;
-    
-    const podcast = await generatePodcast(
-      noteId,
-      content,
-      req.user.id,
-      duration
-    );
-    
-    res.json(podcast);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+# Response (completed)
+{
+  "success": true,
+  "job": {
+    "jobId": "job_1766775319643_h6igj4g7e",
+    "status": "completed",
+    "progress": 100,
+    "podcastId": "694eda1773463cbc1121f708",
+    "audioUrl": "https://your-bucket.s3.amazonaws.com/podcasts/podcast-xxx.mp3",
+    "audioDuration": 298,
+    "transcript": [...],
+    "completedAt": "2025-12-27T00:01:30.000Z"
   }
-});
+}
 ```
 
-## Deployment
+## 🧪 Testing
+
+### Test Complete Webhook Flow
+
+```bash
+# Run comprehensive webhook test
+./test/test-webhook.sh
+```
+
+### Test Complete Pipeline
+
+```bash
+# Test sync generation and full pipeline
+./test/test-complete.sh
+```
+
+### Direct Test Script
+
+```bash
+# Run webhook test directly
+bun run test/test-webhook-flow.ts
+```
+
+These tests will:
+1. Start a local webhook server (webhook test)
+2. Generate a test podcast
+3. Poll for progress with real-time updates
+4. Verify webhook delivery (webhook test)
+5. Test database storage and S3 upload
+6. Show complete results with timing
+
+See [test/README.md](./test/README.md) for detailed testing documentation.
+
+## 📊 API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/podcast/generate/async` | Async generation (returns jobId instantly) |
+| `GET` | `/api/podcast/jobs/:jobId` | Get job status and progress |
+| `GET` | `/api/podcast/jobs/user/:userId` | Get all jobs for user |
+| `GET` | `/api/podcast/:id` | Get podcast by ID |
+| `GET` | `/api/podcast/user/:userId` | Get user's podcasts |
+| `GET` | `/api/podcast/note/:noteId` | Get podcasts for note |
+| `DELETE` | `/api/podcast/:id` | Delete podcast |
+| `GET` | `/api/podcast/health` | Health check |
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Client Request                        │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│              POST /generate/async (instant)              │
+│              Returns jobId immediately                   │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│                    Job Queue                             │
+│              (In-memory, can use Redis)                  │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│                  Job Processor                           │
+│  1. Generate script (OpenAI)                            │
+│  2. Generate audio (Unreal Speech)                      │
+│  3. Combine segments (FFmpeg)                           │
+│  4. Upload to S3                                        │
+│  5. Update database                                     │
+│  6. Send webhook                                        │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│              Webhook → Your App                          │
+│         (Notification when complete)                     │
+└─────────────────────────────────────────────────────────┘
+```
+
+## 💰 Cost Optimization
+
+### TTS Provider Comparison
+
+| Provider | Cost per 1K chars | 10K podcasts/month |
+|----------|------------------|-------------------|
+| **Unreal Speech** | $0.008-0.016 | **$24-48** ✅ |
+| ElevenLabs | ~$0.30 | $900-1,500 |
+
+**Recommendation:** Use Unreal Speech (37x cheaper, same quality)
+
+### Estimated Monthly Costs
+
+For 10,000 podcasts/month:
+- TTS (Unreal Speech): $24-48
+- S3 Storage: $5-10
+- MongoDB Atlas (M0): Free
+- **Total: ~$30-60/month**
+
+## 🚢 Deployment
 
 ### Docker
 
-```bash
-# Build image
-docker build -t podcast-microservice .
+```dockerfile
+FROM oven/bun:latest
 
-# Run container
-docker run -p 3005:3005 --env-file .env podcast-microservice
+WORKDIR /app
+
+COPY package.json bun.lockb ./
+RUN bun install --production
+
+COPY . .
+
+EXPOSE 3005
+
+CMD ["bun", "run", "index.ts"]
 ```
 
-### PM2 (Production)
-
 ```bash
-# Start
-bun run pm2:start
-
-# Monitor
-bun run pm2:monitor
-
-# Stop
-bun run pm2:stop
+# Build and run
+docker build -t podnex-microservice .
+docker run -p 3005:3005 --env-file .env podnex-microservice
 ```
 
-## Cost Estimation
+### Railway / Render / DigitalOcean
 
-**For 10,000 podcasts/month:**
+1. Connect your repository
+2. Set environment variables
+3. Deploy!
 
-| Service | Cost |
-|---------|------|
-| Unreal Speech TTS | $24-48 |
-| OpenAI GPT-4 | ~$50-100 |
-| AWS S3 Storage | ~$5-10 |
-| **Total** | **~$80-160/month** |
+## 📈 Performance
 
-*Using ElevenLabs would cost ~$1,000-1,600/month instead!*
+- **Async generation**: Returns in <100ms
+- **Short podcast (3-5 min)**: ~30-60 seconds to generate
+- **Long podcast (8-10 min)**: ~60-120 seconds to generate
+- **Concurrent jobs**: Processes one at a time (configurable)
+- **Job cleanup**: Auto-deletes jobs older than 24 hours
 
-## Troubleshooting
+## 🛠️ Tech Stack
 
-### Common Issues
-
-**Timeout on generation:**
-- Increase client timeout to 180 seconds minimum
-- Check server logs for errors
-
-**Invalid API key:**
-- Verify `x-api-key` header matches `.env` API_KEYS
-- Ensure no extra spaces in API key
-
-**Audio not accessible:**
-- Check S3 bucket permissions (public read required)
-- Verify CORS configuration on bucket
-
-**MongoDB connection failed:**
-- Ensure MongoDB is running
-- Check `MONGODB_URI` format
-
-## Tech Stack
-
-- **Runtime**: Bun
-- **Framework**: Express.js
-- **AI**: OpenAI GPT-4
-- **TTS**: Unreal Speech / ElevenLabs
-- **Audio**: FFmpeg
-- **Storage**: AWS S3
+- **Runtime**: Bun (or Node.js)
+- **Framework**: Express
 - **Database**: MongoDB
+- **Storage**: AWS S3
+- **AI**: OpenAI GPT-4
+- **TTS**: Unreal Speech
+- **Audio**: FFmpeg
+- **Validation**: Zod
 - **Language**: TypeScript
 
-## License
+## 📝 License
 
 MIT
 
-## Support
+## 🤝 Contributing
 
-For issues and questions, see [API.md](./API.md) for detailed documentation.
+Contributions welcome! Please open an issue or PR.
 
 ---
 
-**Built to solve Vercel timeout issues with podcast generation** 🎙️
+**Built with ❤️ for creating engaging podcast content from text**

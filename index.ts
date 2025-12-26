@@ -90,11 +90,17 @@ app.listen(PORT, async () => {
         console.error('Failed to connect to MongoDB. Server will continue but database features will not work.');
     }
 
+    // Start job processor for async generation
+    startJobProcessor();
+
     console.log(`✓ OpenAI: Configured`);
     console.log(`✓ Unreal Speech: Configured`);
     console.log(`✓ AWS S3: ${process.env.S3_BUCKET_NAME}`);
     console.log('\nEndpoints:');
-    console.log(`  POST http://localhost:${PORT}/api/podcast/generate`);
+    console.log(`  POST http://localhost:${PORT}/api/podcast/generate (sync)`);
+    console.log(`  POST http://localhost:${PORT}/api/podcast/generate/async (async)`);
+    console.log(`  GET  http://localhost:${PORT}/api/podcast/jobs/:jobId`);
+    console.log(`  GET  http://localhost:${PORT}/api/podcast/jobs/user/:userId`);
     console.log(`  GET  http://localhost:${PORT}/api/podcast/:id`);
     console.log(`  GET  http://localhost:${PORT}/api/podcast/user/:userId`);
     console.log(`  GET  http://localhost:${PORT}/api/podcast/note/:noteId`);
@@ -102,3 +108,4 @@ app.listen(PORT, async () => {
     console.log(`  GET  http://localhost:${PORT}/api/podcast/health`);
     console.log('\nReady to generate podcasts! 🚀\n');
 });
+

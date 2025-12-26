@@ -123,6 +123,103 @@ router.post('/generate', apiKeyAuth, async (req: Request, res: Response) => {
     }
 });
 
+// POST /api/podcast/generate/async - Async generation with job queue
+router.post('/generate/async', apiKeyAuth, async (req: Request, res: Response) => {
+    try {
+        console.log('\n=== Async Podcast Generation Request ===');
+        console.log('Request body:', JSON.stringify(req.body, null, 2));
+
+        // Validate request
+        const validationResult = generatePodcastSchema.safeParse(req.body);
+        if (!validationResult.success) {
+            return res.status(400).json({
+                success: false,
+                error: 'Validation failed',
+                details: validationResult.error.issues,
+            });
+        }
+
+        const { noteId, noteContent, userId, duration } = validationResult.data;
+
+        // Create job in queue
+        const job = jobQueue.createJob(noteId, noteContent, userId, duration);
+
+        console.log(`✓ Job created: ${job.jobId}`);
+        console.log(`  User: ${userId}, Note: ${noteId}, Duration: ${duration}`);
+
+        // Return immediately with job ID
+        return res.json({
+            success: true,
+            jobId: job.jobId,
+            status: job.status,
+            message: 'Podcast generation started. Use the jobId to check status.',
+        });
+    } catch (error) {
+        console.error('Error creating async job:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Failed to start podcast generation',
+            message: error instanceof Error ? error.message : 'Unknown error',
+        });
+    }
+});
+
+// GET /api/podcast/jobs/:jobId - Get job status
+router.get('/jobs/:jobId', async (req: Request, res: Response) => {
+    try {
+        const jobId = req.params.jobId;
+        if (!jobId) {
+            return res.status(400).json({ success: false, error: 'Job ID is required' });
+        }
+
+        const job = jobQueue.getJob(jobId);
+
+        if (!job) {
+            return res.status(404).json({
+                success: false,
+                error: 'Job not found',
+            });
+        }
+
+        return res.json({
+            success: true,
+            job,
+        });
+    } catch (error) {
+        console.error('Error getting job status:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Failed to get job status',
+            message: error instanceof Error ? error.message : 'Unknown error',
+        });
+    }
+});
+
+// GET /api/podcast/jobs/user/:userId - Get all jobs for a user
+router.get('/jobs/user/:userId', async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.userId;
+        if (!userId) {
+            return res.status(400).json({ success: false, error: 'User ID is required' });
+        }
+
+        const jobs = jobQueue.getUserJobs(userId);
+
+        return res.json({
+            success: true,
+            jobs,
+            total: jobs.length,
+        });
+    } catch (error) {
+        console.error('Error getting user jobs:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Failed to get user jobs',
+            message: error instanceof Error ? error.message : 'Unknown error',
+        });
+    }
+});
+
 // Health check endpoint - MUST come before /:id route
 router.get('/health', (req: Request, res: Response) => {
     res.json({

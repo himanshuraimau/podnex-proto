@@ -17,15 +17,15 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Load API key from .env file
-if [ -f .env ]; then
-    export $(grep -v '^#' .env | grep API_KEYS | xargs)
+if [ -f ../.env ]; then
+    export $(grep -v '^#' ../.env | grep API_KEYS | xargs)
     # Extract first API key from comma-separated list
     API_KEY=$(echo $API_KEYS | cut -d',' -f1)
     echo -e "${GREEN}✓ Loaded API key from .env${NC}"
     echo ""
 else
     echo -e "${RED}✗ .env file not found!${NC}"
-    echo "Please create a .env file with API_KEYS"
+    echo "Please create a .env file in the project root with API_KEYS"
     exit 1
 fi
 
